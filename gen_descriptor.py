@@ -1,4 +1,4 @@
-from descriptor import bag_of_words_sift, bag_of_words_surf
+from descriptor import *
 import pickle
 from scipy import misc
 
@@ -11,7 +11,7 @@ from scipy import misc
 # )
 def load_pics(path):
 	res = []
-	with open('file_list.txt') as f:
+	with open('men_list.txt') as f:
 		for line in f:
 			line = line.strip()
 			s = line.split('/')
@@ -25,9 +25,9 @@ def load_pics(path):
 def gen_features(t, bowDiction_sift, bowDiction_surf):
 	img = t[0]
 	f = {}
-	f['gist'] = gist_descriptor(img)
 	f['sift'] = bow_feature_extract_sift(bowDiction_sift, img)
 	f['surf'] = bow_feature_extract_surf(bowDiction_surf, img)
+	f['gist'] = gist_descriptor(img)
 	f['label'] = t[2]
 	return f
 
@@ -37,10 +37,13 @@ print('Loaded Pics')
 
 # fill bowDiction_sift and bowDiction_surf
 pics_only = [ loaded[i][0] for i in range(len(loaded)) ]
-bag_of_words_sift(pics_only, 1000)
+v = 200
+# bowDiction_sift = bag_of_words_sift(pics_only, v)
+bowDiction_sift = load_sift_bow_diction('Sift_Voc')
 print('Done Sift dict')
-bag_of_words_surf(pics_only, 1000)
-print('Done Suft dict')
+# bowDiction_surf = bag_of_words_surf(pics_only, v)
+bowDiction_surf = load_surf_bow_diction('Surf_Voc')
+print('Done Surf dict')
 
 
 features = {
@@ -51,7 +54,7 @@ features = {
 }
 
 for t in loaded:
-	f = gen_features(t)
+	f = gen_features(t, bowDiction_sift, bowDiction_surf)
 	for i in features.keys():
 		features[i] += [f[i]]
 
