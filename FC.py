@@ -8,13 +8,35 @@ from six.moves import range
 
 
 ###################################################################################################
+#Load the data descriptors
+def load_data():
+	with open('gist', 'rb') as f:
+		save = pickle.load(f)
+		gist_desc = save['gist']
+		del save
+		print('gist_desc: ', gist_desc.shape)
 
+	with open('surf', 'rb') as f:
+		save = pickle.load(f)
+		surf_desc = save['surf']
+		del save
+		print('surf_desc: ', surf_desc.shape)
 
+	with open('sift', 'rb') as f:
+		save = pickle.load(f)
+		surf_desc = save['sift']
+		del save
+		print('sift_desc: ', sift_desc.shape)
 
-				#Load the data descriptors
+	with open('labels', 'rb') as f:
+		save = pickle.load(f)
+		labels = save['labels']
+		del save
+		print('labels: ', labels.shape)
 
+	return gist_desc, surf_desc, sift_desc, labels
 
-
+gist_desc, surf_desc, sift_desc, labels = load_data()
 ###################################################################################################
 #					TO BE Removed just for reference
 #Reformat into a shape that's more adapted to the models we're going to train:
@@ -69,17 +91,42 @@ with graph.as_default():
 	global_step = tf.Variable(0)
 
 	# Init Variables.
-	x1, y1, x2, y2, x3, y3, x4, y4, x5, y5 = init_weight(960)
+	gist_w = []
+	gist_b = []
+	gist_w[1], gist_b[1], gist_w[2], gist_b[2], gist_w[3], gist_b[3], gist_w[4], gist_b[4], gist_w[5], gist_b[5] = init_weight(960)
+	
+	surf_w = []
+	surf_b = []
+	surf_w[1], surf_b[1], surf_w[2], surf_b[2], surf_w[3], surf_b[3], surf_w[4], surf_b[4], surf_w[5], surf_b[5] = init_weight(1000)
+
+	sift_w = []
+	sift_b = []
+	sift_w[1], sift_b[1], sift_w[2], sift_b[2], sift_w[3], sift_b[3], sift_w[4], sift_b[4], sift_w[5], sift_b[5] = init_weight(1000)
 	
 	# Training computation.
-	def model(data,w1,b1,w2,b2,w3,b3,w4,b4,w5,b5):
-		lay1 = tf.nn.relu(tf.matmul(data, w1) + b1)
-		lay2 = tf.nn.relu(tf.matmul(lay1, w2) + b2)
-		lay3 = tf.matmul(lay2, w3) + b3
-		lay4 = tf.matmul(lay3, w4) + b4
-		return tf.matmul(lay4, w5) + b5
+	def model(data,W,B):
+		lay1 = tf.nn.relu(tf.matmul(data, W[1]) + B[1])
+		lay2 = tf.nn.relu(tf.matmul(lay1, W[2]) + B[2])
+		lay3 = tf.nn.relu(tf.matmul(lay2, W[3]) + B[3])
+		lay4 = tf.nn.relu(tf.matmul(lay3, W[4]) + B[4])
+		return tf.nn.relu(tf.matmul(lay4, W[5]) + B[5])
 	
-	logits = model(tf_train_dataset,x1, y1, x2, y2, x3, y3, x4, y4, x5, y5)
+	gist_logits = model(tf_train_dataset,gist_w,gist_b)
+	surf_logits = model(tf_train_dataset,surf_w,surf_b)
+	sift_logits = model(tf_train_dataset,sift_w,sift_b)
+
+	sum_w = tf.Variable(tf.truncated_normal([3*num_labels, 1],stddev=0.1))
+	sum_b = tf.Variable(tf.zeros([1]))
+	
+	concat = np.concatenate((gist_logits, surf_logits, sift_logits), axis=0)
+	similarity = tf.matmul(concat, sum_w) + sum_b
+
+	# L t ((x t , x +t , x t ); S) = max(0, S(x t , x t ) − S(x t , x t ) + 1),
+	L = 0
+	for i in range(len(similarity)):
+		L += 1 + similarity[i+1] - similarity[i]
+		i++
+
 	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
 	
 	# Optimizer.
