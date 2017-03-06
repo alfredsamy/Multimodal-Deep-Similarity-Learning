@@ -37,8 +37,8 @@ def gist_descriptor(img):
 
 #sift descriptor of size number of (keypoint x 128)
 def sift(img):
-	plt.imshow(img)
-	plt.show()
+	#plt.imshow(img)
+	#plt.show()
 	gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 	sift = cv2.xfeatures2d.SIFT_create()
 	(kp, desc) = sift.detectAndCompute(gray, None)
@@ -215,20 +215,21 @@ def edge_direction_histogram(img):
 # edge_direction_histogram(img)
 ############################################################################
 
-data, label = load_data()
-data, label = data[:10000], label[:10000]
 
-BOWdict = bag_of_words_sift(data)
-BOWdict = load_sift_bow_diction("Surf_Voc")
+# data, label = load_data()
+# data, label = data[:10000], label[:10000]
 
-
-for i in range(10):
-	d = bow_feature_extract_sift(BOWdict,data[i])
-	print(d.shape,label[i])
-	print(d)
-	print("__________________________________________________________")
+# BOWdict = bag_of_words_sift(data)
+# BOWdict = load_sift_bow_diction("Surf_Voc")
 
 
+# for i in range(10):
+# 	d = bow_feature_extract_sift(BOWdict,data[i])
+# 	print(d.shape,label[i])
+# 	print(d)
+# 	print("__________________________________________________________")
 
 
-print("Done")
+
+
+# print("Done")

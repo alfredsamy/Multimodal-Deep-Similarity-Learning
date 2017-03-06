@@ -1,4 +1,4 @@
-# from descriptor import *
+from descriptor import bag_of_words_sift, bag_of_words_surf
 import pickle
 from scipy import misc
 
@@ -22,37 +22,45 @@ def load_pics(path):
 	return res
 
 
-def gen_features(img, bowDiction_sift, bowDiction_surf):
+def gen_features(t, bowDiction_sift, bowDiction_surf):
+	img = t[0]
 	f = {}
 	f['gist'] = gist_descriptor(img)
 	f['sift'] = bow_feature_extract_sift(bowDiction_sift, img)
 	f['surf'] = bow_feature_extract_surf(bowDiction_surf, img)
+	f['label'] = t[2]
 	return f
 
+print('begin loading pics')
+loaded = load_pics('./img/')
+print('Loaded Pics')
 
-# features = {
-# 	'surf' : []
-# 	'sift' : []
-# 	'gist' : []
-# }
-
-# for img in load_pics():
-# 	f = gen_features(img)
-# 	features['surf'] += [f['surf']]
-# 	features['sift'] += [f['sift']]
-# 	features['gist'] += [f['gist']]
+# fill bowDiction_sift and bowDiction_surf
+pics_only = [ loaded[i][0] for i in range(len(loaded)) ]
+bag_of_words_sift(pics_only, 1000)
+print('Done Sift dict')
+bag_of_words_surf(pics_only, 1000)
+print('Done Suft dict')
 
 
-# for i in ['surf', 'sift', 'gist']:
-# 	save_file = open(i, 'wb')
-# 	save = {
-# 		i : features[i]
-# 	}
-# 	pickle.dump(save, save_file, pickle.HIGHEST_PROTOCOL)
-# 	save_file.close()
+features = {
+	'surf' : [],
+	'sift' : [],
+	'gist' : [],
+	'label' : []
+}
 
+for t in loaded:
+	f = gen_features(t)
+	for i in features.keys():
+		features[i] += [f[i]]
 
-if __name__ == '__main__':
-	res = load_pics('./img/')
-	for i in range(10):
-		print(res[i])
+print('begin saving features to files')
+
+for i in features.keys():
+	with open(i + '.pickle', 'wb') as save_file:
+		save = {
+			i : features[i]
+		}
+		pickle.dump(save, save_file, pickle.HIGHEST_PROTOCOL)
+
