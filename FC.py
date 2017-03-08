@@ -5,38 +5,100 @@ import numpy as np
 import tensorflow as tf
 from six.moves import cPickle as pickle
 from six.moves import range
-
+import random
 
 ###################################################################################################
 #Load the data descriptors
 def load_data():
-	with open('gist', 'rb') as f:
+	with open('gist.pickle', 'rb') as f:
 		save = pickle.load(f)
 		gist_desc = save['gist']
 		del save
-		print('gist_desc: ', gist_desc.shape)
+		print('gist_desc: ', len(gist_desc),len(gist_desc[0]))
 
-	with open('surf', 'rb') as f:
+	with open('surf.pickle', 'rb') as f:
 		save = pickle.load(f)
 		surf_desc = save['surf']
 		del save
-		print('surf_desc: ', surf_desc.shape)
+		print('surf_desc: ', len(surf_desc), len(surf_desc[0][0]))
 
-	with open('sift', 'rb') as f:
+	with open('sift.pickle', 'rb') as f:
 		save = pickle.load(f)
-		surf_desc = save['sift']
+		sift_desc = save['sift']
 		del save
-		print('sift_desc: ', sift_desc.shape)
+		print('sift_desc: ', len(sift_desc), len(sift_desc[0][0]))
 
-	with open('labels', 'rb') as f:
+	with open('label.pickle', 'rb') as f:
 		save = pickle.load(f)
-		labels = save['labels']
+		labels = save['label']
 		del save
-		print('labels: ', labels.shape)
+		print('labels: ', len(labels), len(labels[0]))
 
 	return gist_desc, surf_desc, sift_desc, labels
 
 gist_desc, surf_desc, sift_desc, labels = load_data()
+
+
+labels_index = {}
+labels_sum = {}
+
+sum = 0
+labl = labels[0]
+labels_index[labl] = 0
+for i in range(len(labels)):
+	if(labl != labels[i]):
+		print(labl, sum)
+		labels_sum[labl] = sum
+		labl = labels[i]
+		sum = 0
+		labels_index[labl] = i
+	else:
+		sum += 1
+labels_sum[labl] = sum
+
+print(labels_sum)
+print(labels_index)
+print()
+
+test_gist_desc = []
+test_surf_desc = []
+test_sift_desc = []
+test_labels = []
+for k,v in labels_index.items():
+	print(k,v)
+	start = v
+	end = v + max(1,labels_sum[k]//10)
+	for i in gist_desc[start:end]:
+		test_gist_desc.append(i)
+	for i in surf_desc[start:end]:
+		test_surf_desc.append(i)
+	for i in sift_desc[start:end]:
+		test_sift_desc.append(i)
+	for i in labels[start:end]:
+		test_labels.append(i)
+	del gist_desc[start:end]
+	del surf_desc[start:end]
+	del sift_desc[start:end]
+	del labels[start:end]
+	
+	sum = 0
+	labels_index = {}
+	labels_sum = {}
+	labl = labels[0]
+	labels_index[labl] = 0
+	for i in range(len(labels)):
+		if(labl != labels[i]):
+			labels_sum[labl] = sum
+			labl = labels[i]
+			sum = 0
+			labels_index[labl] = i
+		else:
+			sum += 1
+	labels_sum[labl] = sum
+
+print(labels_sum)
+print(labels_index)
+print("*************************Data Loaded**********************************")
 ###################################################################################################
 #					TO BE Removed just for reference
 #Reformat into a shape that's more adapted to the models we're going to train:
@@ -59,7 +121,7 @@ gist_desc, surf_desc, sift_desc, labels = load_data()
 
 #Graph:
 num_labels = 10
-batch_size = 16
+batch_size = 18
 num_hidden_nodes = 100
 num_hidden_nodes2 = 50
 
@@ -71,97 +133,116 @@ def init_weight(input_size):
 	w2 = tf.Variable(tf.truncated_normal([num_hidden_nodes, num_hidden_nodes2],stddev=0.1))
 	b2 = tf.Variable(tf.zeros([num_hidden_nodes2]))
 		
-	w3 = tf.Variable(tf.truncated_normal([num_hidden_nodes, num_hidden_nodes2],stddev=0.1))
+	w3 = tf.Variable(tf.truncated_normal([num_hidden_nodes2, num_hidden_nodes2],stddev=0.1))
 	b3 = tf.Variable(tf.zeros([num_hidden_nodes2]))
 
-	w4 = tf.Variable(tf.truncated_normal([num_hidden_nodes, num_hidden_nodes2],stddev=0.1))
+	w4 = tf.Variable(tf.truncated_normal([num_hidden_nodes2, num_hidden_nodes2],stddev=0.1))
 	b4 = tf.Variable(tf.zeros([num_hidden_nodes2]))
 
-	w5 = tf.Variable(tf.truncated_normal([num_hidden_nodes, num_labels],stddev=0.1))
-	b5 = tf.Variable(tf.zeros([num_labels]))
-	return w1,b1,w2,b2,w3,b3,w4,b4,w5,b5
+	w5 = tf.Variable(tf.truncated_normal([num_hidden_nodes2, num_hidden_nodes2],stddev=0.1))
+	b5 = tf.Variable(tf.zeros([num_hidden_nodes2]))
+	#return w1,b1,w2,b2,w3,b3,w4,b4,w5,b5
+	return (w1,w2,w3,w4,w5),(b1,b2,b3,b4,b5)
+
 
 
 graph = tf.Graph()
 with graph.as_default():
-	tf_train_dataset = tf.placeholder(tf.float32,shape=(batch_size, 1000))#TO BE Chanded
-	tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, num_labels))
-	tf_valid_dataset = tf.constant(valid_dataset)
-	tf_test_dataset = tf.constant(test_dataset)
+	tf_train_gist = tf.placeholder(tf.float32,shape=(batch_size, 2*960))
+	tf_train_sift = tf.placeholder(tf.float32,shape=(batch_size, 2*200))
+	tf_train_surf = tf.placeholder(tf.float32,shape=(batch_size, 2*200))
+	#tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size))
+	
+	tf_test_gist = tf.constant(np.array(test_gist_desc))
+	tf_test_surf = tf.constant(np.array(test_surf_desc))
+	tf_test_sift = tf.constant(np.array(test_sift_desc))
 	global_step = tf.Variable(0)
 
 	# Init Variables.
-	gist_w = []
-	gist_b = []
-	gist_w[1], gist_b[1], gist_w[2], gist_b[2], gist_w[3], gist_b[3], gist_w[4], gist_b[4], gist_w[5], gist_b[5] = init_weight(960)
-	
-	surf_w = []
-	surf_b = []
-	surf_w[1], surf_b[1], surf_w[2], surf_b[2], surf_w[3], surf_b[3], surf_w[4], surf_b[4], surf_w[5], surf_b[5] = init_weight(1000)
-
-	sift_w = []
-	sift_b = []
-	sift_w[1], sift_b[1], sift_w[2], sift_b[2], sift_w[3], sift_b[3], sift_w[4], sift_b[4], sift_w[5], sift_b[5] = init_weight(1000)
-	
+	gist_w, gist_b = init_weight(2*960)
+	surf_w, surf_b = init_weight(2*200)
+	sift_w, sift_b = init_weight(2*200)
+	sum_w = tf.Variable(tf.truncated_normal([3*num_hidden_nodes2, 1],stddev=0.1))
+	sum_b = tf.Variable(tf.zeros([1]))
 	# Training computation.
 	def model(data,W,B):
-		lay1 = tf.nn.relu(tf.matmul(data, W[1]) + B[1])
-		lay2 = tf.nn.relu(tf.matmul(lay1, W[2]) + B[2])
-		lay3 = tf.nn.relu(tf.matmul(lay2, W[3]) + B[3])
-		lay4 = tf.nn.relu(tf.matmul(lay3, W[4]) + B[4])
-		return tf.nn.relu(tf.matmul(lay4, W[5]) + B[5])
+		lay1 = tf.nn.relu(tf.matmul(data, W[0]) + B[0])
+		lay2 = tf.nn.relu(tf.matmul(lay1, W[1]) + B[1])
+		lay3 = tf.nn.relu(tf.matmul(lay2, W[2]) + B[2])
+		lay4 = tf.nn.relu(tf.matmul(lay3, W[3]) + B[3])
+		return tf.nn.relu(tf.matmul(lay4, W[4]) + B[4])
 	
-	gist_logits = model(tf_train_dataset,gist_w,gist_b)
-	surf_logits = model(tf_train_dataset,surf_w,surf_b)
-	sift_logits = model(tf_train_dataset,sift_w,sift_b)
-
-	sum_w = tf.Variable(tf.truncated_normal([3*num_labels, 1],stddev=0.1))
-	sum_b = tf.Variable(tf.zeros([1]))
+	gist_logits = model(tf_train_gist, gist_w, gist_b)
+	surf_logits = model(tf_train_sift, surf_w, surf_b)
+	sift_logits = model(tf_train_sift, sift_w, sift_b)
 	
-	concat = np.concatenate((gist_logits, surf_logits, sift_logits), axis=0)
+	concat = tf.stack([gist_logits, surf_logits, sift_logits], axis=1)
+	concat = tf.reshape(concat, [batch_size,150]) 
 	similarity = tf.matmul(concat, sum_w) + sum_b
+	similarity = tf.reshape(similarity,(1,-1))[0]
+	
+	#Calculate the loss
+	L = []
+	for i in range(batch_size):#similarity[i+1] ==> x,x-
+		a = similarity[i]
+		i += 1
+		if(i < batch_size):
+			b = similarity[i]
+			s = 1 + b - a
+			r = 0
+			r = tf.cond(s>0,lambda: s,lambda: tf.add(0.,0.))
+			L.append(r)
+			#L += max(0, s)
 
-	# L t ((x t , x +t , x t ); S) = max(0, S(x t , x t ) − S(x t , x t ) + 1),
-	L = 0
-	for i in range(len(similarity)):
-		L += 1 + similarity[i+1] - similarity[i]
-		i++
-
-	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
+	loss = tf.reduce_mean(L)
+	#loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
 	
 	# Optimizer.
 	optimizer = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
 	# learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.65, staircase=True)
 	# optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
-	
-	# Predictions for the training, validation, and test data.
-	train_prediction = tf.nn.softmax(logits)
-	valid_prediction = tf.nn.softmax(model(tf_valid_dataset))
-	test_prediction = tf.nn.softmax(model(tf_test_dataset))
 
 
 #Session
+def generate_batch():
+	train_gist = []
+	train_sift = []
+	train_surf = []
+	for k,v in labels_index.items():
+		start = v
+		end = v + labels_sum[k]
+		offset1 = random.randint(start,end-1)
+		offset2 = offset1
+		while(offset2 == offset1):
+			offset2 = random.randint(start,end-1)
+		offset3 = start
+		while(offset3>=start and offset3<end):
+			offset3 = random.randint(0,len(labels)-1)
+		
+		train_gist.append(np.concatenate((gist_desc[offset1] , gist_desc[offset2]),axis=0))
+		train_sift.append(np.concatenate((sift_desc[offset1][0], sift_desc[offset2][0]),axis=0))
+		train_surf.append(np.concatenate((surf_desc[offset1][0], surf_desc[offset2][0]),axis=0))
 
-num_steps = 5001
-def accuracy(predictions, labels):
-	return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
-			 / predictions.shape[0])
+		train_gist.append(np.concatenate((gist_desc[offset1], gist_desc[offset3]),axis=0))
+		train_sift.append(np.concatenate((sift_desc[offset1][0], sift_desc[offset3][0]),axis=0))
+		train_surf.append(np.concatenate((surf_desc[offset1][0], surf_desc[offset3][0]),axis=0))
+		
+	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
 
+num_steps = 100001
 with tf.Session(graph=graph) as session:
 	tf.initialize_all_variables().run()
 	print("Initialized")
 	for step in range(num_steps):
-		offset = random.randint(0,train_labels.shape[0] - batch_size)
-		# Generate a minibatch.
-		batch_data = train_dataset[offset:(offset + batch_size), :]
-		batch_labels = train_labels[offset:(offset + batch_size), :]
-		
+		a,b,c = generate_batch()
+		# print("***************************",a.shape,b.shape,c.shape)
 		# Prepare a dictionary telling the session where to feed the minibatch.
-		feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels}
-		_, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
-		if (step % 500 == 0):
+		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
+		sim, l, _ = session.run([similarity, loss, optimizer], feed_dict=feed_dict)
+		if (step % 1000 == 0):
 			print("Minibatch loss at step %d: %f" % (step, l))
-			print("Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
-			print("Validation accuracy: %.1f%%" % accuracy(valid_prediction.eval(), valid_labels))
+			print("similarity: ",sim)
 			print()
-	print("Test accuracy: %.1f%%" % accuracy(test_prediction.eval(), test_labels))
+print("DONE")
+
+

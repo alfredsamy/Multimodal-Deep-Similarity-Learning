@@ -3,8 +3,8 @@ from scipy import misc
 import numpy as np
 import cv2
 import gist #https://github.com/yuichiroTCY/lear-gist-python
-from skimage import feature
-from sklearn.preprocessing import normalize
+#from skimage import feature
+#from sklearn.preprocessing import normalize
 from six.moves import cPickle as pickle
 
 def load_data():
