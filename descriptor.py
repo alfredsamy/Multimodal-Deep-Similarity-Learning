@@ -3,7 +3,7 @@ from scipy import misc
 import numpy as np
 import cv2
 import gist #https://github.com/yuichiroTCY/lear-gist-python
-#from skimage import feature
+from skimage import feature
 #from sklearn.preprocessing import normalize
 from six.moves import cPickle as pickle
 
@@ -155,7 +155,8 @@ def build_gabor_filter():
 		filters.append(kern)
 	return filters
 
-def gabor(img, filters):
+def gabor(img):
+	filters = build_gabor_filter()
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	accum = np.zeros_like(gray)
 	for kern in filters:
