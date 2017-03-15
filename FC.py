@@ -28,6 +28,18 @@ def load_data():
 		del save
 		print('sift_desc: ', len(sift_desc), len(sift_desc[0][0]))
 
+	with open('gabor.pickle', 'rb') as f:
+		save = pickle.load(f)
+		gabor_desc = save['sift']
+		del save
+		print('gabor_desc: ', len(gabor_desc), len(gabor_desc[0][0]))
+
+	with open('lbp.pickle', 'rb') as f:
+		save = pickle.load(f)
+		lbp_desc = save['sift']
+		del save
+		print('lbp_desc: ', len(lbp_desc), len(lbp_desc[0][0]))
+	
 	with open('label.pickle', 'rb') as f:
 		save = pickle.load(f)
 		labels = save['label']

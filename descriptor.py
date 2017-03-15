@@ -162,7 +162,14 @@ def gabor(img):
 	for kern in filters:
 		fimg = cv2.filter2D(gray, cv2.CV_8UC3, kern)
 		np.maximum(accum, fimg, accum)
-	return accum 
+	(hist, _) = np.histogram(accum.ravel(),
+		bins=np.arange(0, 57 + 3),
+		range=(0, 57 + 2))
+ 
+	# normalize the histogram
+	hist = hist.astype("float")
+	hist /= (hist.sum() + 1e-7)
+	return hist 
 
 
 def local_binary_pattern(img):
