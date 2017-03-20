@@ -28,11 +28,13 @@ def gen_features(t, bowDiction_sift, bowDiction_surf):
 	f['sift'] = bow_feature_extract_sift(bowDiction_sift, img)
 	f['surf'] = bow_feature_extract_surf(bowDiction_surf, img)
 	f['gist'] = gist_descriptor(img)
+	f['gabor'] = gabor(img)
+	f['lbp'] = local_binary_pattern(img)
 	f['label'] = t[2]
 	return f
 
 print('begin loading pics')
-loaded = load_pics('./img/')
+loaded = load_pics('')
 print('Loaded Pics')
 
 # fill bowDiction_sift and bowDiction_surf
@@ -50,6 +52,8 @@ features = {
 	'surf' : [],
 	'sift' : [],
 	'gist' : [],
+	'gabor': [],
+	'lbp'  : [],
 	'label' : []
 }
 

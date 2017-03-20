@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import gist #https://github.com/yuichiroTCY/lear-gist-python
 from skimage import feature
-from sklearn.preprocessing import normalize
+#from sklearn.preprocessing import normalize
 from six.moves import cPickle as pickle
 
 def load_data():
@@ -155,13 +155,21 @@ def build_gabor_filter():
 		filters.append(kern)
 	return filters
 
-def gabor(img, filters):
+def gabor(img):
+	filters = build_gabor_filter()
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	accum = np.zeros_like(gray)
 	for kern in filters:
 		fimg = cv2.filter2D(gray, cv2.CV_8UC3, kern)
 		np.maximum(accum, fimg, accum)
-	return accum 
+	(hist, _) = np.histogram(accum.ravel(),
+		bins=np.arange(0, 57 + 3),
+		range=(0, 57 + 2))
+ 
+	# normalize the histogram
+	hist = hist.astype("float")
+	hist /= (hist.sum() + 1e-7)
+	return hist 
 
 
 def local_binary_pattern(img):
