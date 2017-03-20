@@ -30,13 +30,13 @@ def load_data():
 
 	with open('gabor.pickle', 'rb') as f:
 		save = pickle.load(f)
-		gabor_desc = save['sift']
+		gabor_desc = save['gabor']
 		del save
 		print('gabor_desc: ', len(gabor_desc), len(gabor_desc[0][0]))
 
 	with open('lbp.pickle', 'rb') as f:
 		save = pickle.load(f)
-		lbp_desc = save['sift']
+		lbp_desc = save['lbp']
 		del save
 		print('lbp_desc: ', len(lbp_desc), len(lbp_desc[0][0]))
 	
