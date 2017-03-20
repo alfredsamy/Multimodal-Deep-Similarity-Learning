@@ -162,14 +162,15 @@ def gabor(img):
 	for kern in filters:
 		fimg = cv2.filter2D(gray, cv2.CV_8UC3, kern)
 		np.maximum(accum, fimg, accum)
-	(hist, _) = np.histogram(accum.ravel(),
-		bins=np.arange(0, 57 + 3),
-		range=(0, 57 + 2))
+	# (hist, _) = np.histogram(accum.ravel(),
+	# 	bins=np.arange(0, 57 + 3),
+	# 	range=(0, 57 + 2))
  
-	# normalize the histogram
-	hist = hist.astype("float")
-	hist /= (hist.sum() + 1e-7)
-	return hist 
+	# # normalize the histogram
+	# hist = hist.astype("float")
+	# hist /= (hist.sum() + 1e-7)
+	return accum - gray
+	# return hist 
 
 
 def local_binary_pattern(img):
@@ -181,16 +182,16 @@ def local_binary_pattern(img):
 	# to build the histogram of patterns
 	lbp = feature.local_binary_pattern(gray, numPoints,
 		radius, method="uniform")
-	(hist, _) = np.histogram(lbp.ravel(),
-		bins=np.arange(0, numPoints + 3),
-		range=(0, numPoints + 2))
+	# (hist, _) = np.histogram(lbp.ravel(),
+	# 	bins=np.arange(0, numPoints + 3),
+	# 	range=(0, numPoints + 2))
  
-	# normalize the histogram
-	hist = hist.astype("float")
-	hist /= (hist.sum() + eps)
+	# # normalize the histogram
+	# hist = hist.astype("float")
+	# hist /= (hist.sum() + eps)
  
 	# return the histogram of Local Binary Patterns
-	return hist
+	return lbp
 
 #displays currently edges image only, can't determine the edge direction histogram
 def edge_direction_histogram(img):

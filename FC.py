@@ -32,13 +32,13 @@ def load_data():
 		save = pickle.load(f)
 		gabor_desc = save['gabor']
 		del save
-		print('gabor_desc: ', len(gabor_desc), len(gabor_desc[0][0]))
+		print('gabor_desc: ', len(gabor_desc), len(gabor_desc[0]))
 
 	with open('lbp.pickle', 'rb') as f:
 		save = pickle.load(f)
 		lbp_desc = save['lbp']
 		del save
-		print('lbp_desc: ', len(lbp_desc), len(lbp_desc[0][0]))
+		print('lbp_desc: ', len(lbp_desc), len(lbp_desc[0]))
 	
 	with open('label.pickle', 'rb') as f:
 		save = pickle.load(f)
@@ -46,9 +46,9 @@ def load_data():
 		del save
 		print('labels: ', len(labels), len(labels[0]))
 
-	return gist_desc, surf_desc, sift_desc, labels
+	return gist_desc, surf_desc, sift_desc, gabor_desc, lbp_desc, labels
 
-gist_desc, surf_desc, sift_desc, labels = load_data()
+gist_desc, surf_desc, sift_desc, gabor_desc , lbp_desc, labels = load_data()
 
 
 labels_index = {}
@@ -75,6 +75,8 @@ print()
 test_gist_desc = []
 test_surf_desc = []
 test_sift_desc = []
+test_gabor_desc = []
+test_lbp_desc = []
 test_labels = []
 for k,v in labels_index.items():
 	print(k,v)
@@ -86,11 +88,17 @@ for k,v in labels_index.items():
 		test_surf_desc.append(i)
 	for i in sift_desc[start:end]:
 		test_sift_desc.append(i)
+	for i in gabor_desc[start:end]:
+		test_gabor_desc.append(i)
+	for i in lbp_desc[start:end]:
+		test_lbp_desc.append(i)
 	for i in labels[start:end]:
 		test_labels.append(i)
 	del gist_desc[start:end]
 	del surf_desc[start:end]
 	del sift_desc[start:end]
+	del gabor_desc[start:end]
+	del lbp_desc[start:end]
 	del labels[start:end]
 	
 	sum = 0
