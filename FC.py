@@ -249,6 +249,7 @@ def generate_batch():
 		
 	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
 
+
 num_steps = 100001
 with tf.Session(graph=graph) as session:
 	tf.initialize_all_variables().run()
@@ -263,6 +264,12 @@ with tf.Session(graph=graph) as session:
 			print("Minibatch loss at step %d: %f" % (step, l))
 			print("similarity: ",sim)
 			print()
+
+	# saving weights for future reuse
+	saver = tf.train.Saver()
+	save_path = saver.save(session, "model.ckpt")
+	print("Model saved in file: %s" % save_path)
+
 print("DONE")
 
 
