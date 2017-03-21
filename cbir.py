@@ -249,7 +249,7 @@ print('Generated Query Image Features')
 
 with tf.Session(graph=graph) as sess:
 	saver = tf.train.Saver()
-	saver.restore(sess, "model.ckpt")
+	saver.restore(sess, "./model.ckpt")
 	print("Model Loaded")
 
 	for i in len(gist_desc):
