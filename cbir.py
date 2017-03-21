@@ -252,7 +252,7 @@ with tf.Session(graph=graph) as sess:
 	saver.restore(sess, "./model.ckpt")
 	print("Model Loaded")
 
-	for i in len(gist_desc):
+	for i in range(len(gist_desc)):
 		a,b,c = generate_batch(query_img_features, i)
 		# print("***************************",a.shape,b.shape,c.shape)
 		# Prepare a dictionary telling the session where to feed the minibatch.
