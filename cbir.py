@@ -6,6 +6,15 @@ import tensorflow as tf
 from six.moves import cPickle as pickle
 from six.moves import range
 import random
+import sys
+from descriptor import *
+
+
+if len(sys.argv) < 2:
+	print('Please input the image')
+	exit(1)
+	
+query_img_file = sys.argv[1]
 
 ###################################################################################################
 #Load the data descriptors
@@ -50,7 +59,7 @@ def load_data():
 
 gist_desc, surf_desc, sift_desc, gabor_desc , lbp_desc, labels = load_data()
 
-def generate_batch():
+def generate_batch(query_img_features):
 	train_gist = []
 	train_sift = []
 	train_surf = []
@@ -75,46 +84,39 @@ def generate_batch():
 		
 	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
 
-labels_index = {}
-labels_sum = {}
 
-sum = 0
-labl = labels[0]
-labels_index[labl] = 0
-for i in range(len(labels)):
-	if(labl != labels[i]):
-		print('[labl,sum]', labl, sum)
-		labels_sum[labl] = sum
-		labl = labels[i]
-		sum = 0
-		labels_index[labl] = i
-	else:
-		sum += 1
-labels_sum[labl] = sum
+def gen_query_features(img, bowDiction_sift, bowDiction_surf):
+	f = {}
+	f['sift'] = bow_feature_extract_sift(bowDiction_sift, img)
+	f['surf'] = bow_feature_extract_surf(bowDiction_surf, img)
+	f['gist'] = gist_descriptor(img)
+	f['gabor'] = gabor(img)
+	f['lbp'] = local_binary_pattern(img)
+	return f
 
-print('[labels_sum]', labels_sum)
-print('[labels_index]', labels_index)
-print()
+bowDiction_sift = load_sift_bow_diction('Sift_Voc')
+print('Done Sift dict')
+# bowDiction_surf = bag_of_words_surf(pics_only, v)
+bowDiction_surf = load_surf_bow_diction('Surf_Voc')
+print('Done Surf dict')
+
+query_img_features = gen_query_features(misc.imread(query_img_file), bowDiction_sift, bowDiction_surf)
+print(query_img_features)
 
 
-# num_steps = 100001
+# saver = tf.train.Saver()
 # with tf.Session(graph=graph) as session:
-# 	tf.initialize_all_variables().run()
-# 	print("Initialized")
-# 	for step in range(num_steps):
+# 	saver.restore(sess, "model.ckpt")
+# 	print("Loaded Model")
+	
+
+
+# 	for i in len(gist_desc):
+
 # 		a,b,c = generate_batch()
 # 		# print("***************************",a.shape,b.shape,c.shape)
 # 		# Prepare a dictionary telling the session where to feed the minibatch.
 # 		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
-# 		sim, l, _ = session.run([similarity, loss, optimizer], feed_dict=feed_dict)
-# 		if (step % 1000 == 0):
-# 			print("Minibatch loss at step %d: %f" % (step, l))
-# 			print("similarity: ",sim)
-# 			print()
-
-# 	# saving weights for future reuse
-# 	saver = tf.train.Saver()
-# 	save_path = saver.save(session, "model.ckpt")
-# 	print("Model saved in file: %s" % save_path)
-
+# 		sim, l, _ = session.run([similarity], feed_dict=feed_dict)
+	
 # print("DONE")
