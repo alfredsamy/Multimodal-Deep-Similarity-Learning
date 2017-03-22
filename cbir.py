@@ -133,7 +133,7 @@ print("*************************Data Loaded**********************************")
 ###################################################################################################
 #Graph:
 num_labels = 10
-batch_size = 18
+batch_size = 1
 num_hidden_nodes = 100
 num_hidden_nodes2 = 50
 
@@ -206,11 +206,11 @@ with graph.as_default():
 			L.append(r)
 			#L += max(0, s)
 
-	loss = tf.reduce_mean(L)
+	# loss = tf.reduce_mean(L)
 	#loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
 	
 	# Optimizer.
-	optimizer = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
+	# optimizer = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
 	# learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.65, staircase=True)
 	# optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
@@ -271,8 +271,8 @@ with tf.Session(graph=graph) as sess:
 		# print("***************************",a.shape,b.shape,c.shape)
 		# Prepare a dictionary telling the session where to feed the minibatch.
 		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
-		sim, l, _ = sess.run([similarity], feed_dict=feed_dict)
-		print(i, 'Sim =', sim, 'l =', l)
+		sim = sess.run([similarity], feed_dict=feed_dict)
+		print(i, 'Sim =', sim)
 
 
 print("DONE")
