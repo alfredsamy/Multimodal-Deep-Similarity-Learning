@@ -11,11 +11,11 @@ from descriptor import *
 import heapq as hq
 
 ## take query image as input
-if len(sys.argv) < 2:
-	print('Please input the image')
-	exit(1)
+# if len(sys.argv) < 2:
+# 	print('Please input the image')
+# 	exit(1)
 	
-query_img_file = sys.argv[1]
+# query_img_file = sys.argv[1]
 
 ###################################################################################################
 #Load the data descriptors
@@ -71,7 +71,7 @@ for i in range(len(labels)):
 		print(labl, sum)
 		labels_sum[labl] = sum
 		labl = labels[i]
-		sum = 0
+		my_sum = 0
 		labels_index[labl] = i
 	else:
 		sum += 1
@@ -248,7 +248,7 @@ print('Done Surf dict')
 
 def load_test_pics(path='img/'):
 	res = []
-	with open('men_list.txt') as f:
+	with open('men_list_test.txt') as f:
 		for line in f:
 			line = line.strip()
 			s = line.split('/')
@@ -259,27 +259,37 @@ def load_test_pics(path='img/'):
 	return res
 
 
-retrievals = []
+del sum
+eval_res = []
+
 with tf.Session(graph=graph) as sess:
 	saver = tf.train.Saver()
 	saver.restore(sess, "./model.ckpt")
 	print("Model Loaded")
 
-	query_img_features = gen_query_features(misc.imread(query_img_file), bowDiction_sift, bowDiction_surf)
+	for test_tuple in load_test_pics():
+		retrievals = []
+		query_img_features = gen_query_features(test_tuple[0], bowDiction_sift, bowDiction_surf)
 	
-	for i in range(len(gist_desc)):
-		a,b,c = generate_batch(query_img_features, i)
-		# print("***************************",a.shape,b.shape,c.shape)
-		# Prepare a dictionary telling the session where to feed the minibatch.
-		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
-		sim = sess.run([similarity], feed_dict=feed_dict)
-		# print(i, 'Sim =', sim)
+		for i in range(len(gist_desc)):
+			a,b,c = generate_batch(query_img_features, i)
+			# print("***************************",a.shape,b.shape,c.shape)
+			# Prepare a dictionary telling the session where to feed the minibatch.
+			feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
+			sim = sess.run([similarity], feed_dict=feed_dict)
+			# print(i, 'Sim =', sim)
 
-		hq.heappush(retrievals, (sim[0][0], i))
-		if len(retrievals) > 5:
-			hq.heappop(retrievals)
+			hq.heappush(retrievals, (sim[0][0], i))
+			if len(retrievals) > 5:
+				hq.heappop(retrievals)
 			
+		correct = sum([1 for j in [labels[u[1]] for u in retrievals] if j == test_tuple[2]])
+		incorrect = 5 - correct
+		eval_res += [(correct, incorrect)]
 
-print('[sims]', retrievals)
-print('[labels_sums]', [labels[i[1]] for i in retrievals])
-print("DONE")
+
+		print('[sims]', retrievals)
+		print('[labels]', [labels[i[1]] for i in retrievals])
+		print("DONE")
+
+print('[eval_res]', eval_res)
