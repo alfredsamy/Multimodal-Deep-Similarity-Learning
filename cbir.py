@@ -10,6 +10,7 @@ import sys
 from descriptor import *
 
 
+## take query image as input
 if len(sys.argv) < 2:
 	print('Please input the image')
 	exit(1)
@@ -221,9 +222,10 @@ def generate_batch(query_img_features, cur_img_ind):
 	train_sift = []
 	train_surf = []
 
+
 	train_gist.append(np.concatenate((gist_desc[cur_img_ind] , query_img_features['gist']),axis=0))
-	train_sift.append(np.concatenate((sift_desc[cur_img_ind][0], query_img_features['sift']),axis=0))
-	train_surf.append(np.concatenate((surf_desc[cur_img_ind][0], query_img_features['surf']),axis=0))
+	train_sift.append(np.concatenate((sift_desc[cur_img_ind][0], query_img_features['sift'][0]),axis=0))
+	train_surf.append(np.concatenate((surf_desc[cur_img_ind][0], query_img_features['surf'][0]),axis=0))
 
 	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
 
@@ -243,8 +245,18 @@ print('Done Sift dict')
 bowDiction_surf = load_surf_bow_diction('Surf_Voc')
 print('Done Surf dict')
 
-query_img_features = gen_query_features(misc.imread(query_img_file), bowDiction_sift, bowDiction_surf)
-print('Generated Query Image Features')
+
+def load_test_pics(path='img/'):
+	res = []
+	with open('men_list.txt') as f:
+		for line in f:
+			line = line.strip()
+			s = line.split('/')
+			
+			img = misc.imread(path + line)
+			
+			res += [(img, s[3], s[1] + '/' + s[2], s[4])]
+	return res
 
 
 with tf.Session(graph=graph) as sess:
@@ -252,12 +264,14 @@ with tf.Session(graph=graph) as sess:
 	saver.restore(sess, "./model.ckpt")
 	print("Model Loaded")
 
+	query_img_features = gen_query_features(misc.imread(query_img_file), bowDiction_sift, bowDiction_surf)
+	
 	for i in range(len(gist_desc)):
 		a,b,c = generate_batch(query_img_features, i)
 		# print("***************************",a.shape,b.shape,c.shape)
 		# Prepare a dictionary telling the session where to feed the minibatch.
 		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
-		sim, l, _ = session.run([similarity], feed_dict=feed_dict)
+		sim, l, _ = sess.run([similarity], feed_dict=feed_dict)
 		print(i, 'Sim =', sim, 'l =', l)
 
 
