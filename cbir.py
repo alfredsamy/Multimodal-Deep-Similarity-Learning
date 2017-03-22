@@ -8,7 +8,7 @@ from six.moves import range
 import random
 import sys
 from descriptor import *
-
+import heapq as hq
 
 ## take query image as input
 if len(sys.argv) < 2:
@@ -259,6 +259,7 @@ def load_test_pics(path='img/'):
 	return res
 
 
+retrievals = []
 with tf.Session(graph=graph) as sess:
 	saver = tf.train.Saver()
 	saver.restore(sess, "./model.ckpt")
@@ -272,7 +273,13 @@ with tf.Session(graph=graph) as sess:
 		# Prepare a dictionary telling the session where to feed the minibatch.
 		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
 		sim = sess.run([similarity], feed_dict=feed_dict)
-		print(i, 'Sim =', sim)
+		# print(i, 'Sim =', sim)
 
+		hq.heappush(retrievals, (sim[0][0], i))
+		if len(retrievals) > 5:
+			hq.heappop(retrievals)
+			
 
+print('[sims]', retrievals)
+print('[labels_sums]', [labels[i[1]] for i in retrievals])
 print("DONE")
