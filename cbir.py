@@ -9,6 +9,8 @@ import random
 import sys
 from descriptor import *
 import heapq as hq
+import shutil
+import os
 
 ## take query image as input
 # if len(sys.argv) < 2:
@@ -280,15 +282,22 @@ def load_test_pics(path='img/'):
 
 del sum
 eval_res = []
-res_paths = []
 top_n = 5
+
+### for visualization
+dst_root = 'retrieval'
+shutil.rmtree(dst_root, True)
+os.makedirs(dst_root)
+src_root = 'img/'
+
 with tf.Session(graph=graph) as sess:
 	saver = tf.train.Saver()
 	saver.restore(sess, "./model.ckpt")
 	print("Model Loaded")
 
-
+	test_num = -1
 	for test_tuple in load_test_pics():
+		test_num += 1
 		retrievals = []
 		query_img_features = gen_query_features(test_tuple[0], bowDiction_sift, bowDiction_surf)
 	
@@ -312,14 +321,18 @@ with tf.Session(graph=graph) as sess:
 		print('[labels]', correct, [labels[i[1]] for i in retrievals])
 		print()
 
-		res_paths.append([test_tuple[4]] + [ paths[i[1]] for i in retrievals ])
+		
+		dst_cur = dst_root + '/test_' + str(test_num) + '_c' + str(correct)
+		os.makedirs(dst_cur)
+
+		src = src_root + '/' + test_tuple[4]
+		dst = dst_cur + '/query_' + test_tuple[2].replace('/', '-') + '.jpg'
+		shutil.copyfile(src, dst)
+		
+		for j in range(len(retrievals)):
+			src = src_root + '/' + paths[retrievals[j][1]]
+			dst = dst_cur + '/' + str(j) + '_' + labels[retrievals[j][1]].replace('/', '-') + '.jpg'
+			shutil.copyfile(src, dst)
+		
 
 print('[Mean Accuracy]', sum(eval_res) / len(eval_res))
-
-with open('res_paths.txt', 'w') as f:
-	for i in res_paths:
-		f.write(i[0])
-		f.write('\n')
-		for j in i[1:]:
-			f.write('\t' + j + '\n')
-		
