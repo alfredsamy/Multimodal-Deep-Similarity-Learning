@@ -232,12 +232,7 @@ def generate_batch():
 		start = v
 		end = v + labels_sum[k]
 		offset1 = None
-		try:
-			offset1 = random.randint(start,end-1)	
-		except:
-			print('ROBERT EXCEPTION :', start, end, k, v, labels_index[k])
-			raise
-
+		offset1 = random.randint(start,end-1)
 		offset2 = offset1
 		while(offset2 == offset1):
 			offset2 = random.randint(start,end-1)
