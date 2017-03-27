@@ -35,7 +35,7 @@ def gen_features(t, bowDiction_sift, bowDiction_surf):
 	return f
 
 print('begin loading pics')
-loaded = load_pics('img/')
+loaded = load_pics('')
 print('Loaded Pics')
 
 # fill bowDiction_sift and bowDiction_surf

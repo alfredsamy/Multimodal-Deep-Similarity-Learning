@@ -171,6 +171,10 @@ with graph.as_default():
 	tf_train_gist = tf.placeholder(tf.float32,shape=(batch_size, 2*960))
 	tf_train_sift = tf.placeholder(tf.float32,shape=(batch_size, 2*200))
 	tf_train_surf = tf.placeholder(tf.float32,shape=(batch_size, 2*200))
+	tf_train_gabor = tf.placeholder(tf.float32,shape=(batch_size, 2*256))
+	tf_train_lbp = tf.placeholder(tf.float32,shape=(batch_size, 2*256))
+
+
 	#tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size))
 	
 	# tf_test_gist = tf.constant(np.array(test_gist_desc))
@@ -182,7 +186,9 @@ with graph.as_default():
 	gist_w, gist_b = init_weight(2*960)
 	surf_w, surf_b = init_weight(2*200)
 	sift_w, sift_b = init_weight(2*200)
-	sum_w = tf.Variable(tf.truncated_normal([3*num_hidden_nodes2, 1],stddev=0.1))
+	gabor_w, gabor_b = init_weight(2*256)
+	lbp_w, lbp_b = init_weight(2*256)
+	sum_w = tf.Variable(tf.truncated_normal([5*num_hidden_nodes2, 1],stddev=0.1))
 	sum_b = tf.Variable(tf.zeros([1]))
 	# Training computation.
 	def model(data,W,B):
@@ -195,8 +201,10 @@ with graph.as_default():
 	gist_logits = model(tf_train_gist, gist_w, gist_b)
 	surf_logits = model(tf_train_sift, surf_w, surf_b)
 	sift_logits = model(tf_train_sift, sift_w, sift_b)
+	gabor_logits = model(tf_train_gabor, gabor_w, gabor_b)
+	lbp_logits = model(tf_train_lbp, lbp_w, lbp_b)
 	
-	concat = tf.stack([gist_logits, surf_logits, sift_logits], axis=1)
+	concat = tf.stack([gist_logits, surf_logits, sift_logits, gabor_logits, lbp_logits], axis=1)
 	concat = tf.reshape(concat, [batch_size,150]) 
 	similarity = tf.matmul(concat, sum_w) + sum_b
 	similarity = tf.reshape(similarity,(1,-1))[0]
@@ -228,6 +236,8 @@ def generate_batch():
 	train_gist = []
 	train_sift = []
 	train_surf = []
+	train_gabor = []
+	tarin_lbp = []
 
 	my_labels = list(labels_index.keys())
 	for _ in range(batch_size // 2):
@@ -254,12 +264,16 @@ def generate_batch():
 		train_gist.append(np.concatenate((gist_desc[offset1] , gist_desc[offset2]),axis=0))
 		train_sift.append(np.concatenate((sift_desc[offset1][0], sift_desc[offset2][0]),axis=0))
 		train_surf.append(np.concatenate((surf_desc[offset1][0], surf_desc[offset2][0]),axis=0))
+		train_gabor.append(np.concatenate((gabor_desc[offset1][0], gabor_desc[offset2][0]),axis=0))
+		train_lbp.append(np.concatenate((lbp_desc[offset1][0], lbp_desc[offset2][0]),axis=0))
 
 		train_gist.append(np.concatenate((gist_desc[offset1], gist_desc[offset3]),axis=0))
 		train_sift.append(np.concatenate((sift_desc[offset1][0], sift_desc[offset3][0]),axis=0))
 		train_surf.append(np.concatenate((surf_desc[offset1][0], surf_desc[offset3][0]),axis=0))
-		
-	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
+		train_gabor.append(np.concatenate((gabor_desc[offset1][0], gabor_desc[offset3][0]),axis=0))
+		train_lbp.append(np.concatenate((lbp_desc[offset1][0], lbp_desc[offset3][0]),axis=0))
+
+	return np.array(train_gist), np.array(train_sift), np.array(train_surf), np.array(train_gabor), np.array(train_lbp)
 
 
 num_steps = 100001
@@ -267,10 +281,10 @@ with tf.Session(graph=graph) as session:
 	tf.initialize_all_variables().run()
 	print("Initialized")
 	for step in range(num_steps):
-		a,b,c = generate_batch()
+		a,b,c,d,e = generate_batch()
 		# print("***************************",a.shape,b.shape,c.shape)
 		# Prepare a dictionary telling the session where to feed the minibatch.
-		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
+		feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c, tf_train_gabor:d, tf_train_lbp:e}
 		sim, l, _ = session.run([similarity, loss, optimizer], feed_dict=feed_dict)
 		if (step % 1000 == 0):
 			print("Minibatch loss at step %d: %f" % (step, l))

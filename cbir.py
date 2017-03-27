@@ -94,6 +94,7 @@ test_sift_desc = []
 test_gabor_desc = []
 test_lbp_desc = []
 test_labels = []
+
 for k,v in labels_index.items():
 	print(k,v)
 	start = v
@@ -170,17 +171,24 @@ with graph.as_default():
 	tf_train_sift = tf.placeholder(tf.float32,shape=(batch_size, 2*200))
 	tf_train_surf = tf.placeholder(tf.float32,shape=(batch_size, 2*200))
 	#tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size))
-	
+	tf_train_gabor = tf.placeholder(tf.float32,shape=(batch_size, 2*256))
+	tf_train_lbp = tf.placeholder(tf.float32,shape=(batch_size, 2*256))
+
 	tf_test_gist = tf.constant(np.array(test_gist_desc))
 	tf_test_surf = tf.constant(np.array(test_surf_desc))
 	tf_test_sift = tf.constant(np.array(test_sift_desc))
+	tf_test_gabor = tf.constant(np.array(test_gabor_desc))
+	tf_test_lbp = tf.constant(np.array(test_lbp_desc))
 	global_step = tf.Variable(0)
 
 	# Init Variables.
 	gist_w, gist_b = init_weight(2*960)
 	surf_w, surf_b = init_weight(2*200)
 	sift_w, sift_b = init_weight(2*200)
-	sum_w = tf.Variable(tf.truncated_normal([3*num_hidden_nodes2, 1],stddev=0.1))
+	gabor_w, gabor_b = init_weight(2*256)
+	lbp_w, lbp_b = init_weight(2*256)
+
+	sum_w = tf.Variable(tf.truncated_normal([5*num_hidden_nodes2, 1],stddev=0.1))
 	sum_b = tf.Variable(tf.zeros([1]))
 	# Training computation.
 	def model(data,W,B):
@@ -193,8 +201,10 @@ with graph.as_default():
 	gist_logits = model(tf_train_gist, gist_w, gist_b)
 	surf_logits = model(tf_train_sift, surf_w, surf_b)
 	sift_logits = model(tf_train_sift, sift_w, sift_b)
-	
-	concat = tf.stack([gist_logits, surf_logits, sift_logits], axis=1)
+	gabor_logits = model(tf_train_gabor, gabor_w, gabor_b)
+	lbp_logits = model(tf_train_lbp, lbp_w, lbp_b)
+
+	concat = tf.stack([gist_logits, surf_logits, sift_logits, gabor_logits, lbp_logits], axis=1)
 	concat = tf.reshape(concat, [batch_size,150]) 
 	similarity = tf.matmul(concat, sum_w) + sum_b
 	similarity = tf.reshape(similarity,(1,-1))[0]
@@ -227,13 +237,16 @@ def generate_batch(query_img_features, cur_img_ind):
 	train_gist = []
 	train_sift = []
 	train_surf = []
-
+	train_gabor = []
+	train_lbp = []
 
 	train_gist.append(np.concatenate((gist_desc[cur_img_ind] , query_img_features['gist']),axis=0))
 	train_sift.append(np.concatenate((sift_desc[cur_img_ind][0], query_img_features['sift'][0]),axis=0))
 	train_surf.append(np.concatenate((surf_desc[cur_img_ind][0], query_img_features['surf'][0]),axis=0))
+	train_gabor.append(np.concatenate((surf_desc[cur_img_ind][0], query_img_features['gabor'][0]),axis=0))
+	train_lbp.append(np.concatenate((surf_desc[cur_img_ind][0], query_img_features['lbp'][0]),axis=0))
 
-	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
+	return np.array(train_gist), np.array(train_sift), np.array(train_surf), np.array(train_gabor), np.array(train_lbp)
 
 
 def gen_query_features(img, bowDiction_sift, bowDiction_surf):
@@ -280,10 +293,10 @@ with tf.Session(graph=graph) as sess:
 		query_img_features = gen_query_features(test_tuple[0], bowDiction_sift, bowDiction_surf)
 	
 		for i in range(len(gist_desc)):
-			a,b,c = generate_batch(query_img_features, i)
+			a,b,c,d,e = generate_batch(query_img_features, i)
 			# print("***************************",a.shape,b.shape,c.shape)
 			# Prepare a dictionary telling the session where to feed the minibatch.
-			feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c}
+			feed_dict = {tf_train_gist: a, tf_train_sift: b,tf_train_surf: c, tf_train_gabor: d, tf_train_lbp:e}
 			sim = sess.run([similarity], feed_dict=feed_dict)
 			# print(i, 'Sim =', sim)
 
