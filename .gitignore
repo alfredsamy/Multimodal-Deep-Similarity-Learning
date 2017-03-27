@@ -2,6 +2,7 @@
 *model*
 *.pyc
 *.jpg
+*_Voc
 
 binary_files_backup/
 img/
