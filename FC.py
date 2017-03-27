@@ -141,7 +141,7 @@ print("*************************Data Loaded**********************************")
 
 #Graph:
 num_labels = 10
-batch_size = 18
+batch_size = 18 # should be even
 num_hidden_nodes = 100
 num_hidden_nodes2 = 50
 
@@ -228,17 +228,28 @@ def generate_batch():
 	train_gist = []
 	train_sift = []
 	train_surf = []
-	for k,v in labels_index.items():
-		start = v
-		end = v + labels_sum[k]
-		offset1 = None
-		offset1 = random.randint(start,end-1)
-		offset2 = offset1
-		while(offset2 == offset1):
-			offset2 = random.randint(start,end-1)
-		offset3 = start
-		while(offset3>=start and offset3<end):
-			offset3 = random.randint(0,len(labels)-1)
+
+	my_labels = list(labels_index.keys())
+	for _ in range(batch_size // 2):
+		r = random.randint(0, len(labels_index.keys()) - 1)
+		random_label = my_labels[r]
+		start = labels_index[random_label]
+		end = start + labels_sum[random_label] - 1 # inclusive
+		offset1 = random.randint(start, end)
+		offset2 = random.choice([i for i in range(start, end + 1) if i != offset1])
+		offset3 = random.choice([i for i in range(len(labels)) if i < start or i > end])
+
+	# for k,v in labels_index.items():
+	# 	start = v
+	# 	end = v + labels_sum[k]
+	# 	offset1 = None
+	# 	offset1 = random.randint(start,end-1)
+	# 	offset2 = offset1
+	# 	while(offset2 == offset1):
+	# 		offset2 = random.randint(start,end-1)
+	# 	offset3 = start
+	# 	while(offset3>=start and offset3<end):
+	# 		offset3 = random.randint(0,len(labels)-1)
 		
 		train_gist.append(np.concatenate((gist_desc[offset1] , gist_desc[offset2]),axis=0))
 		train_sift.append(np.concatenate((sift_desc[offset1][0], sift_desc[offset2][0]),axis=0))
