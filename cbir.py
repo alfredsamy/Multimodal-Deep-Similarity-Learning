@@ -56,9 +56,15 @@ def load_data():
 		del save
 		print('labels: ', len(labels), len(labels[0]))
 
-	return gist_desc, surf_desc, sift_desc, gabor_desc, lbp_desc, labels
+	with open('path.pickle', 'rb') as f:	
+		save = pickle.load(f)
+		paths = save['path']
+		del save
+		print('paths: ', len(paths))
 
-gist_desc, surf_desc, sift_desc, gabor_desc , lbp_desc, labels = load_data()
+	return gist_desc, surf_desc, sift_desc, gabor_desc, lbp_desc, labels, paths
+
+gist_desc, surf_desc, sift_desc, gabor_desc , lbp_desc, labels, paths = load_data()
 
 labels_index = {}
 labels_sum = {}
@@ -255,17 +261,19 @@ def load_test_pics(path='img/'):
 			
 			img = misc.imread(path + line)
 			
-			res += [(img, s[3], s[1] + '/' + s[2], s[4])]
+			res += [(img, s[3], s[1] + '/' + s[2], s[4], line)]
 	return res
 
 
 del sum
 eval_res = []
+res_paths = []
 top_n = 5
 with tf.Session(graph=graph) as sess:
 	saver = tf.train.Saver()
 	saver.restore(sess, "./model.ckpt")
 	print("Model Loaded")
+
 
 	for test_tuple in load_test_pics():
 		retrievals = []
@@ -282,12 +290,23 @@ with tf.Session(graph=graph) as sess:
 			hq.heappush(retrievals, (sim[0][0], i))
 			if len(retrievals) > top_n:
 				hq.heappop(retrievals)
-			
+		
 		correct = sum([1 for j in [labels[u[1]] for u in retrievals] if j == test_tuple[2]])
 		eval_res += [correct / top_n]
 
+		print('[query label]', test_tuple[2])
 		print('[sims]', retrievals)
 		print('[labels]', correct, [labels[i[1]] for i in retrievals])
 		print()
 
+		res_paths.append([test_tuple[4]] + [ paths[i[1]] for i in retrievals ])
+
 print('[Mean Accuracy]', sum(eval_res) / len(eval_res))
+
+with open('res_paths.txt', 'w') as f:
+	for i in res_paths:
+		f.write(i[0])
+		f.write('\n')
+		for j in i[1:]:
+			f.write('\t' + j + '\n')
+		

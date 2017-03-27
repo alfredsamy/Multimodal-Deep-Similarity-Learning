@@ -18,7 +18,7 @@ def load_pics(path):
 			
 			img = misc.imread(path + line)
 			
-			res += [(img, s[3], s[1] + '/' + s[2], s[4])]
+			res += [(img, s[3], s[1] + '/' + s[2], s[4], line)]
 	return res
 
 
@@ -31,6 +31,7 @@ def gen_features(t, bowDiction_sift, bowDiction_surf):
 	f['gabor'] = gabor(img)
 	f['lbp'] = local_binary_pattern(img)
 	f['label'] = t[2]
+	f['path'] = t[4]
 	return f
 
 print('begin loading pics')
@@ -54,7 +55,8 @@ features = {
 	'gist' : [],
 	'gabor': [],
 	'lbp'  : [],
-	'label' : []
+	'label' : [],
+	'path' : []
 }
 
 for t in loaded:
