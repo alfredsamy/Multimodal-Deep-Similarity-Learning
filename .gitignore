@@ -1,2 +1,8 @@
 *.pickle
 *model*
+*.pyc
+*.jpg
+
+img/
+__pycache__/
+checkpoint
