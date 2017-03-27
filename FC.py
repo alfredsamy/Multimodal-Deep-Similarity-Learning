@@ -72,52 +72,52 @@ print(labels_sum)
 print(labels_index)
 print()
 
-test_gist_desc = []
-test_surf_desc = []
-test_sift_desc = []
-test_gabor_desc = []
-test_lbp_desc = []
-test_labels = []
-for k,v in labels_index.items():
-	print(k,v)
-	start = v
-	end = v + max(1,labels_sum[k]//10)
-	for i in gist_desc[start:end]:
-		test_gist_desc.append(i)
-	for i in surf_desc[start:end]:
-		test_surf_desc.append(i)
-	for i in sift_desc[start:end]:
-		test_sift_desc.append(i)
-	for i in gabor_desc[start:end]:
-		test_gabor_desc.append(i)
-	for i in lbp_desc[start:end]:
-		test_lbp_desc.append(i)
-	for i in labels[start:end]:
-		test_labels.append(i)
-	del gist_desc[start:end]
-	del surf_desc[start:end]
-	del sift_desc[start:end]
-	del gabor_desc[start:end]
-	del lbp_desc[start:end]
-	del labels[start:end]
+# test_gist_desc = []
+# test_surf_desc = []
+# test_sift_desc = []
+# test_gabor_desc = []
+# test_lbp_desc = []
+# test_labels = []
+# for k,v in labels_index.items():
+# 	print(k,v)
+# 	start = v
+# 	end = v + max(1,labels_sum[k]//10)
+# 	for i in gist_desc[start:end]:
+# 		test_gist_desc.append(i)
+# 	for i in surf_desc[start:end]:
+# 		test_surf_desc.append(i)
+# 	for i in sift_desc[start:end]:
+# 		test_sift_desc.append(i)
+# 	for i in gabor_desc[start:end]:
+# 		test_gabor_desc.append(i)
+# 	for i in lbp_desc[start:end]:
+# 		test_lbp_desc.append(i)
+# 	for i in labels[start:end]:
+# 		test_labels.append(i)
+# 	del gist_desc[start:end]
+# 	del surf_desc[start:end]
+# 	del sift_desc[start:end]
+# 	del gabor_desc[start:end]
+# 	del lbp_desc[start:end]
+# 	del labels[start:end]
 	
-	sum = 0
-	labels_index = {}
-	labels_sum = {}
-	labl = labels[0]
-	labels_index[labl] = 0
-	for i in range(len(labels)):
-		if(labl != labels[i]):
-			labels_sum[labl] = sum
-			labl = labels[i]
-			sum = 0
-			labels_index[labl] = i
-		else:
-			sum += 1
-	labels_sum[labl] = sum
+# 	sum = 0
+# 	labels_index = {}
+# 	labels_sum = {}
+# 	labl = labels[0]
+# 	labels_index[labl] = 0
+# 	for i in range(len(labels)):
+# 		if(labl != labels[i]):
+# 			labels_sum[labl] = sum
+# 			labl = labels[i]
+# 			sum = 0
+# 			labels_index[labl] = i
+# 		else:
+# 			sum += 1
+# 	labels_sum[labl] = sum
 
-print(labels_sum)
-print(labels_index)
+# print(labels_sum)
+# print(labels_index)
 print("*************************Data Loaded**********************************")
 ###################################################################################################
 #					TO BE Removed just for reference
@@ -173,9 +173,9 @@ with graph.as_default():
 	tf_train_surf = tf.placeholder(tf.float32,shape=(batch_size, 2*200))
 	#tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size))
 	
-	tf_test_gist = tf.constant(np.array(test_gist_desc))
-	tf_test_surf = tf.constant(np.array(test_surf_desc))
-	tf_test_sift = tf.constant(np.array(test_sift_desc))
+	# tf_test_gist = tf.constant(np.array(test_gist_desc))
+	# tf_test_surf = tf.constant(np.array(test_surf_desc))
+	# tf_test_sift = tf.constant(np.array(test_sift_desc))
 	global_step = tf.Variable(0)
 
 	# Init Variables.
@@ -231,7 +231,13 @@ def generate_batch():
 	for k,v in labels_index.items():
 		start = v
 		end = v + labels_sum[k]
-		offset1 = random.randint(start,end-1)
+		offset1 = None
+		try:
+			offset1 = random.randint(start,end-1)	
+		except:
+			print('ROBERT EXCEPTION :', start, end, k, v, labels_index[k])
+			raise
+
 		offset2 = offset1
 		while(offset2 == offset1):
 			offset2 = random.randint(start,end-1)
@@ -250,7 +256,7 @@ def generate_batch():
 	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
 
 
-num_steps = 100001
+num_steps = 10001
 with tf.Session(graph=graph) as session:
 	tf.initialize_all_variables().run()
 	print("Initialized")
