@@ -284,12 +284,10 @@ with tf.Session(graph=graph) as sess:
 				hq.heappop(retrievals)
 			
 		correct = sum([1 for j in [labels[u[1]] for u in retrievals] if j == test_tuple[2]])
-		incorrect = top_n - correct
-		eval_res += [(correct, incorrect)]
-
+		eval_res += [correct / top_n]
 
 		print('[sims]', retrievals)
 		print('[labels]', correct, [labels[i[1]] for i in retrievals])
-		print("DONE")
+		print()
 
-print('[eval_res]', eval_res)
+print('[Mean Accuracy]', sum(eval_res) / len(eval_res))

@@ -262,7 +262,7 @@ def generate_batch():
 	return np.array(train_gist), np.array(train_sift), np.array(train_surf)
 
 
-num_steps = 10001
+num_steps = 100001
 with tf.Session(graph=graph) as session:
 	tf.initialize_all_variables().run()
 	print("Initialized")
