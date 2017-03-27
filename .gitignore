@@ -3,6 +3,7 @@
 *.pyc
 *.jpg
 
+binary_files_backup/
 img/
 __pycache__/
 checkpoint
