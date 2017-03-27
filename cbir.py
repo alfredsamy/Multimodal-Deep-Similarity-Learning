@@ -261,7 +261,7 @@ def load_test_pics(path='img/'):
 
 del sum
 eval_res = []
-
+top_n = 5
 with tf.Session(graph=graph) as sess:
 	saver = tf.train.Saver()
 	saver.restore(sess, "./model.ckpt")
@@ -280,16 +280,16 @@ with tf.Session(graph=graph) as sess:
 			# print(i, 'Sim =', sim)
 
 			hq.heappush(retrievals, (sim[0][0], i))
-			if len(retrievals) > 5:
+			if len(retrievals) > top_n:
 				hq.heappop(retrievals)
 			
 		correct = sum([1 for j in [labels[u[1]] for u in retrievals] if j == test_tuple[2]])
-		incorrect = 5 - correct
+		incorrect = top_n - correct
 		eval_res += [(correct, incorrect)]
 
 
 		print('[sims]', retrievals)
-		print('[labels]', [labels[i[1]] for i in retrievals])
+		print('[labels]', correct, [labels[i[1]] for i in retrievals])
 		print("DONE")
 
 print('[eval_res]', eval_res)
